@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HashSeed Keeper Genetic Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0E130E; --panel:#141B14; --panel2:#101610; --line:#26331F;
+    --text:#ECF1E8; --muted:#8E998A; --faint:#5E685A;
+    --resin:#E6A951;
+    --cookies:#D98AC9; --mac:#7FD1B9; --sherbet:#F0A6C2; --pbb:#C9A36A;
+    --diesel:#C8D45E; --haze:#6FB8D6; --afghani:#9B8BD4;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0;
+    background:radial-gradient(1200px 600px at 70% -10%, #16201400 0%, #0E130E 60%),var(--bg);
+    color:var(--text);font-family:"Inter",system-ui,sans-serif;line-height:1.55;
+    padding:clamp(18px,4vw,56px);
+  }
+  .wrap{max-width:1080px;margin:0 auto}
+  .eyebrow{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.28em;
+    text-transform:uppercase;color:var(--resin);margin:0 0 14px}
+  h1{font-family:"Space Grotesk",sans-serif;font-weight:700;font-size:clamp(30px,6vw,52px);
+    line-height:1.02;letter-spacing:-.02em;margin:0 0 12px}
+  h1 .frost{background:linear-gradient(180deg,#fff 0%,#cdd9c7 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .lede{color:var(--muted);max-width:62ch;font-size:clamp(14px,1.6vw,16px);margin:0}
+  .meta{display:flex;flex-wrap:wrap;gap:8px 22px;margin-top:18px;
+    font-family:"JetBrains Mono",monospace;font-size:11.5px;color:var(--faint);
+    border-top:1px solid var(--line);padding-top:14px}
+  .meta b{color:var(--muted);font-weight:500}
+
+  .sec{margin-top:clamp(34px,6vw,64px)}
+  .sec-head{display:flex;align-items:baseline;gap:14px;margin-bottom:18px}
+  .sec-num{font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--resin);letter-spacing:.1em}
+  .sec-title{font-family:"Space Grotesk",sans-serif;font-weight:600;font-size:clamp(18px,2.4vw,23px);
+    letter-spacing:-.01em;margin:0}
+  .sec-sub{color:var(--muted);font-size:13.5px;margin:.4em 0 0;max-width:66ch}
+
+  .stage{position:relative;border:1px solid var(--line);border-radius:18px;
+    background:radial-gradient(700px 380px at 50% 34%, #18221530 0%, transparent 70%),var(--panel2);
+    padding:8px;overflow:hidden}
+  svg{display:block;width:100%;height:auto}
+  .edge{stroke-width:1.8;fill:none;opacity:.32;transition:opacity .2s,stroke-width .2s}
+  .edge.dash{stroke-dasharray:3 5;opacity:.4}
+  .node{cursor:default}
+  .node circle{transition:filter .2s}
+  .hub circle{stroke:#0E130E;stroke-width:1.5}
+  .keep circle{fill:#11180F;stroke:var(--resin);stroke-width:2}
+  .anchor circle{stroke:var(--resin);stroke-width:2.5;filter:drop-shadow(0 0 9px rgba(230,169,81,.55))}
+  .island circle{stroke:var(--haze);stroke-dasharray:2 3}
+  .nlab{font-family:"JetBrains Mono",monospace;font-size:10.5px;fill:var(--text);
+    paint-order:stroke;stroke:#0E130E;stroke-width:3.2px;stroke-linejoin:round}
+  .nlab.hublab{font-size:10px;fill:#0E130E;stroke:none}
+  .nlab.muted{fill:var(--muted)}
+  .stage.has-hover .edge{opacity:.06}
+  .stage.has-hover .node{opacity:.3}
+  .edge.lit{opacity:.95!important;stroke-width:2.8}
+  .node.lit{opacity:1!important}
+  .node.lit circle{filter:drop-shadow(0 0 10px currentColor)}
+
+  .legend{display:flex;flex-wrap:wrap;gap:10px 18px;margin-top:16px;
+    font-family:"JetBrains Mono",monospace;font-size:11.5px;color:var(--muted)}
+  .swatch{display:inline-flex;align-items:center;gap:7px}
+  .dot{width:11px;height:11px;border-radius:50%;display:inline-block}
+  .legend .keepkey .dot{background:#11180F;border:2px solid var(--resin)}
+  .legend .islandkey .dot{background:#11180F;border:2px dashed var(--haze)}
+
+  /* genealogy */
+  .treewrap{border:1px solid var(--line);border-radius:14px;background:var(--panel2);padding:8px}
+  .gbox{fill:#11180F;stroke:var(--resin);stroke-width:1.5;rx:8}
+  .gbox.comp{stroke:var(--faint);stroke-dasharray:3 3}
+  .gname{font-family:"Space Grotesk",sans-serif;font-weight:600;font-size:15px;fill:var(--text)}
+  .gsub{font-family:"JetBrains Mono",monospace;font-size:9.5px;fill:var(--muted);letter-spacing:.04em}
+  .garrow{stroke:var(--resin);stroke-width:1.6;fill:none;opacity:.7}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(305px,1fr));gap:14px}
+  .card{border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:18px 18px 16px;position:relative}
+  .card.your{border-color:#3a3320}
+  .card.island{border-color:#27414b}
+  .card h3{font-family:"Space Grotesk",sans-serif;font-weight:600;font-size:18px;margin:11px 0 2px;letter-spacing:-.01em}
+  .tag{font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;
+    padding:3px 8px;border-radius:999px;display:inline-block;border:1px solid var(--line);color:var(--muted)}
+  .tag.verified{color:#bfe6b0;border-color:#33502a}
+  .tag.your{color:var(--resin);border-color:#4a3d1d}
+  .tag.island{color:#9fd0e0;border-color:#27414b}
+  .tag.clone{color:#aab4bf;border-color:#3a4350}
+  .lin{font-family:"JetBrains Mono",monospace;font-size:12px;line-height:1.65;color:var(--text);margin:12px 0 0}
+  .lin .x{color:var(--faint)}
+  .lin .sub{color:var(--muted);display:block;padding-left:12px;border-left:1px solid var(--line);margin-top:5px}
+  .note{color:var(--muted);font-size:12.5px;margin:11px 0 0;font-style:italic}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:13px}
+  .chip{font-family:"JetBrains Mono",monospace;font-size:9.5px;letter-spacing:.05em;text-transform:uppercase;
+    padding:3px 7px;border-radius:5px;color:#0E130E;font-weight:700}
+  .foot{font-family:"JetBrains Mono",monospace;font-size:10.5px;color:var(--faint);margin-top:12px;
+    display:flex;justify-content:space-between;border-top:1px solid var(--line);padding-top:9px}
+  .lab{margin-top:13px;border-top:1px solid var(--line);padding-top:11px}
+  .labhead{display:flex;justify-content:space-between;font-family:"JetBrains Mono",monospace;
+    font-size:10.5px;color:var(--muted);margin-bottom:10px}
+  .labhead b{color:var(--text);font-weight:700}
+  .cann{font-family:"JetBrains Mono",monospace;font-size:9px;color:var(--muted);margin-bottom:11px;
+    padding-bottom:9px;border-bottom:1px solid var(--line);letter-spacing:.02em}
+  .cann .hot{color:var(--resin);font-weight:700}
+  .terprow{display:grid;grid-template-columns:96px 1fr 34px;align-items:center;gap:8px;margin:5px 0;
+    font-family:"JetBrains Mono",monospace;font-size:9.5px;color:var(--muted)}
+  .tname{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tbar{height:7px;background:#1c241a;border-radius:4px;overflow:hidden}
+  .tbar i{display:block;height:100%;background:var(--faint);border-radius:4px}
+  .tbar.dom i{background:var(--resin)}
+  .tval{text-align:right;color:var(--text)}
+  .scl{margin-top:11px;font-family:"JetBrains Mono",monospace;font-size:9px;color:var(--muted);
+    display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+  .scl b{color:var(--text);font-weight:700}
+  .sclcode{display:inline-block;padding:2px 6px;border:1px solid var(--resin);color:var(--resin);
+    border-radius:5px;font-weight:700;letter-spacing:.08em}
+  .predclass{margin-top:13px;border-top:1px dashed var(--line);padding-top:11px;
+    font-family:"JetBrains Mono",monospace;font-size:9px;color:var(--muted);
+    display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+  .predclass b{color:#cfd8c9;font-weight:700}
+  .predtag{display:inline-block;padding:2px 6px;border:1px dashed var(--faint);color:var(--muted);
+    border-radius:5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;font-size:8px}
+  .vault{display:grid;grid-template-columns:repeat(auto-fill,minmax(288px,1fr));gap:14px}
+  .vgroup{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:15px 16px}
+  .vgroup.flag{border-color:#3a3320;background:linear-gradient(180deg,#1a160d40,transparent),var(--panel)}
+  .vtitle{font-family:"Space Grotesk",sans-serif;font-weight:600;font-size:13.5px;margin:0 0 11px;
+    display:flex;justify-content:space-between;align-items:center;gap:8px;color:var(--text)}
+  .vcount{font-family:"JetBrains Mono",monospace;font-size:9.5px;color:var(--resin);
+    border:1px solid #4a3d1d;border-radius:999px;padding:1px 8px;font-weight:500}
+  .vlist{list-style:none;margin:0;padding:0;font-family:"JetBrains Mono",monospace;font-size:10.5px;
+    color:var(--muted);line-height:1.5}
+  .vlist li{padding:5px 0;border-top:1px solid #1c241a}
+  .vlist li:first-child{border-top:none}
+  .vann{color:var(--faint);font-size:9px}
+  .parentlab{font-family:"JetBrains Mono",monospace;font-size:8.5px;color:var(--faint);
+    text-transform:uppercase;letter-spacing:.09em;margin-bottom:9px}
+  .estlab{margin-top:13px;border-top:1px dashed var(--line);padding-top:11px}
+  .esthead{display:flex;justify-content:space-between;align-items:center;
+    font-family:"JetBrains Mono",monospace;font-size:8.5px;color:var(--faint);
+    text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px}
+  .estbadge{border:1px dashed var(--faint);border-radius:5px;padding:2px 6px;color:var(--muted);font-weight:700}
+  .tbar.est i{background:#414a39}
+  .tbar.est.dom i{background:#8f7a44}
+  .estbasis{font-family:"JetBrains Mono",monospace;font-size:9px;color:var(--faint);margin-top:9px;line-height:1.5}
+
+  .insight{border:1px solid var(--line);border-radius:14px;
+    background:linear-gradient(180deg,#161e1430,transparent),var(--panel2);padding:clamp(18px,3vw,26px)}
+  .insight p{margin:0 0 12px;font-size:14.5px;color:#d7ded2}
+  .insight p:last-child{margin-bottom:0}
+  .insight b{color:var(--text)}
+  .hub-em{font-family:"JetBrains Mono",monospace;font-size:13px;padding:1px 4px;border-radius:4px}
+  .pagefoot{margin-top:38px;color:var(--faint);font-family:"JetBrains Mono",monospace;font-size:11px;
+    border-top:1px solid var(--line);padding-top:16px;line-height:1.7}
+  @media (max-width:560px){.meta{gap:6px 16px}.nlab{font-size:9px}}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+  /* paged output */
+  html{background:var(--bg)}
+  html,body{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  @media print{
+    @page{size:Letter;margin:0}
+    body{padding:30px 34px}
+    .wrap{max-width:none}
+    .sec{margin-top:30px}
+    .sec-head{break-after:avoid}
+    .stage,.treewrap,.insight,.card{break-inside:avoid;page-break-inside:avoid}
+    header{break-inside:avoid}
+    .legend{break-inside:avoid}
+  }
+
+  /* relatedness matrix */
+  .rmat{border-collapse:collapse;font-family:"JetBrains Mono",monospace;margin:0 auto}
+  .rmat th,.rmat td{text-align:center}
+  .rcol{color:var(--muted);font-weight:500;padding:4px 2px;font-size:9.5px}
+  .rrow{text-align:right;color:var(--text);font-weight:500;padding:4px 10px 4px 0;white-space:nowrap;font-size:10px;font-family:"Inter",sans-serif}
+  .rc{width:44px;height:30px;color:#0E130E;font-weight:700;border:1px solid #0E130E;font-size:10px}
+  .rc.diag{color:#dfe7ef}
+  .rmat.hl .rc{opacity:.3}
+  .rmat.hl .rc.on{opacity:1;outline:2px solid var(--resin);outline-offset:-2px}
+  .rkey{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:15px;font-family:"JetBrains Mono",monospace;font-size:10px;color:var(--muted);justify-content:center}
+  .rkey .sw{display:inline-flex;align-items:center;gap:6px}
+  .rkey .sb{width:22px;height:11px;border-radius:2px;display:inline-block}
+  /* filter bar */
+  .filterbar{display:flex;flex-wrap:wrap;gap:7px 9px;margin:0 0 15px;align-items:center}
+  .fgroup{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+  .flabel{font-family:"JetBrains Mono",monospace;font-size:8.5px;text-transform:uppercase;letter-spacing:.09em;color:var(--faint);margin-right:1px}
+  .fchip{font-family:"JetBrains Mono",monospace;font-size:9.5px;padding:3px 9px;border:1px solid var(--line);border-radius:999px;color:var(--muted);cursor:pointer;background:transparent;transition:all .15s}
+  .fchip:hover{border-color:var(--muted);color:var(--text)}
+  .fchip.active{background:var(--resin);color:#0E130E;border-color:var(--resin);font-weight:700}
+  .freset{border-style:dashed}
+  .fsep{width:1px;height:15px;background:var(--line);margin:0 2px}
+  .stage.has-filter .edge{opacity:.05}
+  .stage.has-filter .node{opacity:.26}
+  .stage.has-filter .node.fmatch{opacity:1}
+  .stage.has-filter .node.fmatch circle{filter:drop-shadow(0 0 9px currentColor)}
+  .stage.has-filter .edge.fmatch{opacity:.85!important;stroke-width:2.6}
+
+  .klab{font-size:13px;font-weight:600}
+  .sublab{font-family:"JetBrains Mono",monospace;font-size:8px;fill:#8E998A}
+  .garoma{font-family:"JetBrains Mono",monospace;font-size:9px;fill:#A6C98A}
+  .gftag{fill:#9FC2D6}
+  .rlabel{font-family:"JetBrains Mono",monospace;font-size:9.5px;fill:#E6A951;font-weight:700}
+  .rlabel.gp{fill:#8E998A;font-weight:400}
+  .bnote{border:1px solid #3a3320;border-left:3px solid var(--resin);border-radius:10px;
+    background:linear-gradient(180deg,#1a160d40,transparent),var(--panel);padding:15px 18px;margin-top:16px}
+  .bnote h4{font-family:"Space Grotesk",sans-serif;font-size:12.5px;margin:0 0 9px;color:var(--resin);
+    text-transform:uppercase;letter-spacing:.06em}
+  .bnote p{margin:0 0 9px;font-size:13.5px;color:var(--muted);line-height:1.62}
+  .bnote p:last-child{margin:0}
+  .bnote b{color:var(--text)}
+  .plan{display:flex;gap:16px;padding:16px 0;border-top:1px solid var(--line)}
+  .plan:first-child{border-top:none;padding-top:2px}
+  .pnum{font-family:"JetBrains Mono",monospace;font-size:13px;color:var(--resin);font-weight:700;flex-shrink:0;width:22px;padding-top:3px}
+  .pbody{flex:1;min-width:0}
+  .pcross{font-family:"Space Grotesk",sans-serif;font-weight:600;font-size:15.5px;color:var(--text);margin:0}
+  .pcross .x{color:var(--faint);font-weight:400}
+  .ptags{display:flex;flex-wrap:wrap;gap:6px;margin:9px 0 0}
+  .ptag{font-family:"JetBrains Mono",monospace;font-size:9px;text-transform:uppercase;letter-spacing:.05em;padding:2px 8px;border-radius:999px;border:1px solid #4a3d1d;color:var(--resin)}
+  .ptag.alt{border-color:#27414b;color:#9fd0e0}
+  .prat{font-size:13.5px;color:var(--muted);margin:10px 0 0;line-height:1.62}
+  .prat b{color:var(--text)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <p class="eyebrow">HashSeed · Keeper Registry</p>
+    <h1><span class="frost">Keeper Genetic Map</span></h1>
+    <p class="lede">Ten mother keepers, all lineages confirmed. They aren't ten parallel lines — your dessert side is a three-generation family tree, and the whole library threads through a handful of shared ancestors. Hover any keeper in the constellation to trace its routes.</p>
+    <div class="meta">
+      <span><b>10</b> keepers</span>
+      <span><b>all</b> lineages confirmed</span>
+      <span><b>3</b> crosses · <b>4</b> phenohunts · <b>3</b> clone-only</span>
+      <span><b>3</b> generations deep</span>
+      <span><b>2</b> outcross islands</span>
+      <span><b>4</b> measured · <b>6</b> estimated panels</span>
+      <span><b>36</b>-cross breeding vault</span>
+      <span>sources · <b>SeedFinder, Leafly, breeder pages + your records</b></span>
+    </div>
+  </header>
+
+  <!-- 01 CONSTELLATION -->
+  <section class="sec">
+    <div class="sec-head">
+      <span class="sec-num">01</span>
+      <div>
+        <h2 class="sec-title">Shared-ancestry constellation</h2>
+        <p class="sec-sub">Outer ring = your keepers. Inner cluster = recurring ancestors. A line means that ancestor sits meaningfully inside that keeper; line colour marks the genetic family. Dashed = inferred or heritage-only.</p>
+      </div>
+    </div>
+
+    <div class="filterbar">
+      <div class="fgroup"><span class="flabel">role</span>
+        <button class="fchip" data-ft="prov" data-fv="cross">your crosses</button>
+        <button class="fchip" data-ft="prov" data-fv="pheno">phenohunts</button>
+        <button class="fchip" data-ft="prov" data-fv="clone">clone-only</button></div>
+      <span class="fsep"></span>
+      <div class="fgroup"><span class="flabel">class</span>
+        <button class="fchip" data-ft="class" data-fv="jacks">Jacks &amp; Haze</button>
+        <button class="fchip" data-ft="class" data-fv="ogsgas">OGs &amp; Gas</button>
+        <button class="fchip" data-ft="class" data-fv="desserts">Desserts</button>
+        <button class="fchip" data-ft="class" data-fv="sweets">Sweets &amp; Dreams</button></div>
+      <span class="fsep"></span>
+      <div class="fgroup"><span class="flabel">family</span>
+        <button class="fchip" data-ft="fam" data-fv="cookies">Cookies</button>
+        <button class="fchip" data-ft="fam" data-fv="mac">MAC</button>
+        <button class="fchip" data-ft="fam" data-fv="sherbet">Sherbet</button>
+        <button class="fchip" data-ft="fam" data-fv="pbb">PBB</button>
+        <button class="fchip" data-ft="fam" data-fv="diesel">Diesel</button>
+        <button class="fchip" data-ft="fam" data-fv="haze">Haze</button>
+        <button class="fchip" data-ft="fam" data-fv="afghani">OG/Afghani</button></div>
+      <span class="fsep"></span>
+      <button class="fchip freset" data-ft="reset">reset</button>
+    </div>
+    <div class="stage" id="stage">
+      <svg viewBox="0 0 1000 760" role="img" aria-label="Network of keeper cultivars linked to shared ancestor cultivars">
+        <g id="edges" stroke-linecap="round">
+          <!-- Lemon Zest (500,70) -->
+          <line class="edge" data-k="lz" stroke="#7FD1B9"     x1="500" y1="70" x2="609" y2="288"/>
+          <line class="edge" data-k="lz" stroke="#C9A36A"     x1="500" y1="70" x2="391" y2="288"/>
+          <line class="edge" data-k="lz" stroke="#D98AC9" x1="500" y1="70" x2="500" y2="235"/>
+          <line class="edge" data-k="lz" stroke="#C8D45E"  x1="500" y1="70" x2="364" y2="406"/>
+          <line class="edge" data-k="lz" stroke="#6FB8D6"    x1="500" y1="70" x2="439" y2="501"/>
+          <line class="edge" data-k="lz" stroke="#9B8BD4" x1="500" y1="70" x2="561" y2="501"/>
+          <!-- Limonetto (679,128) -->
+          <line class="edge" data-k="lim" stroke="#D98AC9" x1="679" y1="128" x2="500" y2="235"/>
+          <line class="edge" data-k="lim" stroke="#C9A36A"     x1="679" y1="128" x2="391" y2="288"/>
+          <line class="edge" data-k="lim" stroke="#7FD1B9"     x1="679" y1="128" x2="609" y2="288"/>
+          <line class="edge" data-k="lim" stroke="#F0A6C2" x1="679" y1="128" x2="636" y2="406"/>
+          <!-- Black Limo (790,281) -->
+          <line class="edge" data-k="bl" stroke="#D98AC9" x1="790" y1="281" x2="500" y2="235"/>
+          <line class="edge" data-k="bl" stroke="#C9A36A"     x1="790" y1="281" x2="391" y2="288"/>
+          <line class="edge" data-k="bl" stroke="#F0A6C2" x1="790" y1="281" x2="636" y2="406"/>
+          <!-- Polar Dusk (790,469) -->
+          <line class="edge" data-k="pd" stroke="#F0A6C2" x1="790" y1="469" x2="636" y2="406"/>
+          <line class="edge" data-k="pd" stroke="#D98AC9" x1="790" y1="469" x2="500" y2="235"/>
+          <!-- Sharpe Fuel (679,622) -->
+          <line class="edge" data-k="sf" stroke="#9B8BD4" x1="679" y1="622" x2="561" y2="501"/>
+          <line class="edge" data-k="sf" stroke="#D98AC9" x1="679" y1="622" x2="500" y2="235"/>
+          <line class="edge" data-k="sf" stroke="#F0A6C2" x1="679" y1="622" x2="636" y2="406"/>
+          <!-- Space Queen (500,680) -->
+          <line class="edge" data-k="sq" stroke="#6FB8D6"    x1="500" y1="680" x2="439" y2="501"/>
+          <line class="edge" data-k="sq" stroke="#9B8BD4" x1="500" y1="680" x2="561" y2="501"/>
+          <!-- Midnight Snow (321,622) island -->
+          <line class="edge dash" data-k="ms" stroke="#6FB8D6" x1="321" y1="622" x2="439" y2="501"/>
+          <!-- S.A.G.E 'N Sour (210,469) -->
+          <line class="edge" data-k="sns" stroke="#C8D45E"  x1="210" y1="469" x2="364" y2="406"/>
+          <line class="edge" data-k="sns" stroke="#6FB8D6"    x1="210" y1="469" x2="439" y2="501"/>
+          <line class="edge" data-k="sns" stroke="#9B8BD4" x1="210" y1="469" x2="561" y2="501"/>
+          <!-- Chilled MacMosa (210,281) bridge -->
+          <line class="edge" data-k="cmm" stroke="#7FD1B9"     x1="210" y1="281" x2="609" y2="288"/>
+          <line class="edge" data-k="cmm" stroke="#D98AC9" x1="210" y1="281" x2="500" y2="235"/>
+          <line class="edge" data-k="cmm" stroke="#C8D45E"  x1="210" y1="281" x2="364" y2="406"/>
+          <line class="edge" data-k="cmm" stroke="#9B8BD4" x1="210" y1="281" x2="561" y2="501"/>
+          <!-- Black Milk (321,128) -->
+          <line class="edge" data-k="bmk" stroke="#D98AC9" x1="321" y1="128" x2="500" y2="235"/>
+          <line class="edge dash" data-k="bmk" stroke="#C9A36A" x1="321" y1="128" x2="391" y2="288"/>
+        </g>
+
+        <!-- HUBS -->
+        <g>
+          <g class="hub"><circle cx="500" cy="235" r="30" fill="#D98AC9"/><text class="nlab hublab" x="500" y="239" text-anchor="middle">Cookies</text></g>
+          <g class="hub"><circle cx="609" cy="288" r="27" fill="#7FD1B9"/><text class="nlab hublab" x="609" y="292" text-anchor="middle">MAC</text></g>
+          <g class="hub"><circle cx="636" cy="406" r="27" fill="#F0A6C2"/><text class="nlab hublab" x="636" y="403" text-anchor="middle">Sherbet</text><text class="nlab hublab" x="636" y="414" text-anchor="middle">/Gelato</text></g>
+          <g class="hub"><circle cx="561" cy="501" r="26" fill="#9B8BD4"/><text class="nlab hublab" x="561" y="498" text-anchor="middle">OG /</text><text class="nlab hublab" x="561" y="509" text-anchor="middle">Afghani</text></g>
+          <g class="hub"><circle cx="439" cy="501" r="27" fill="#6FB8D6"/><text class="nlab hublab" x="439" y="498" text-anchor="middle">Haze</text><text class="nlab hublab" x="439" y="509" text-anchor="middle">/Skunk</text></g>
+          <g class="hub"><circle cx="364" cy="406" r="27" fill="#C8D45E"/><text class="nlab hublab" x="364" y="403" text-anchor="middle">Diesel</text><text class="nlab hublab" x="364" y="414" text-anchor="middle">/Chem</text></g>
+          <g class="hub"><circle cx="391" cy="288" r="28" fill="#C9A36A"/><text class="nlab hublab" x="391" y="285" text-anchor="middle">PBB</text><text class="nlab hublab" x="391" y="296" text-anchor="middle">/Breath</text></g>
+        </g>
+
+        <!-- KEEPERS -->
+        <g>
+          <g class="node keep anchor" data-k="lz" data-prov="cross" data-class="jacks" data-fam="mac pbb cookies diesel haze afghani" style="color:var(--resin)"><circle cx="500" cy="70" r="25"/><text class="nlab klab" x="500" y="24" text-anchor="middle">Lemon Zest</text><text class="sublab" x="500" y="36" text-anchor="middle">LBB × SLH</text></g>
+          <g class="node keep your" data-k="lim" data-prov="cross" data-class="jacks desserts" data-fam="cookies pbb mac sherbet" style="color:var(--cookies)"><circle cx="679" cy="128" r="21"/><text class="nlab klab" x="679" y="88" text-anchor="middle">Limonetto</text><text class="sublab" x="679" y="100" text-anchor="middle">Sherbutter × Lemon Zest</text></g>
+          <g class="node keep your" data-k="bl" data-prov="cross" data-class="desserts" data-fam="cookies pbb sherbet" style="color:var(--pbb)"><circle cx="790" cy="281" r="21"/><text class="nlab klab" x="828" y="278" text-anchor="start">Black Limo</text><text class="sublab" x="828" y="291" text-anchor="start">Limonetto × Black Milk</text></g>
+          <g class="node keep your" data-k="pd" data-prov="pheno" data-class="desserts" data-fam="sherbet cookies" style="color:var(--sherbet)"><circle cx="790" cy="469" r="21"/><text class="nlab klab" x="828" y="466" text-anchor="start">Polar Dusk</text><text class="sublab" x="828" y="479" text-anchor="start">Sunset Runtz × Bakers Dozen</text></g>
+          <g class="node keep your" data-k="sf" data-prov="pheno" data-class="ogsgas" data-fam="afghani cookies sherbet" style="color:var(--afghani)"><circle cx="679" cy="622" r="21"/><text class="nlab klab" x="679" y="662" text-anchor="middle">Sharpe Fuel</text><text class="sublab" x="679" y="674" text-anchor="middle">(Legends OG×Cookies)×(Zwish×Georgia Pie)</text></g>
+          <g class="node keep island" data-k="sq" data-prov="clone" data-class="sweets" data-fam="haze afghani" style="color:var(--haze)"><circle cx="500" cy="680" r="21"/><text class="nlab klab" x="500" y="718" text-anchor="middle">Space Queen</text><text class="sublab" x="500" y="730" text-anchor="middle">Romulan × Cinderella 99</text></g>
+          <g class="node keep island" data-k="ms" data-prov="clone" data-class="jacks" data-fam="haze" style="color:var(--haze)"><circle cx="321" cy="622" r="20"/><text class="nlab klab" x="321" y="662" text-anchor="middle">Midnight Snow</text><text class="sublab" x="321" y="674" text-anchor="middle">Gooey × (Old Mendo Haze × Dark Desire)</text></g>
+          <g class="node keep" data-k="sns" data-prov="pheno" data-class="ogsgas" data-fam="diesel haze afghani" style="color:var(--diesel)"><circle cx="210" cy="469" r="21"/><text class="nlab klab" x="172" y="466" text-anchor="end">S.A.G.E 'N Sour</text><text class="sublab" x="172" y="479" text-anchor="end">S.A.G.E × Sour Diesel</text></g>
+          <g class="node keep" data-k="cmm" data-prov="pheno" data-class="ogsgas" data-fam="mac cookies diesel afghani" style="color:var(--mac)"><circle cx="210" cy="281" r="21"/><text class="nlab klab" x="172" y="278" text-anchor="end">Chilled MacMosa</text><text class="sublab" x="172" y="291" text-anchor="end">Mimosa × Mac Stomper</text></g>
+          <g class="node keep your" data-k="bmk" data-prov="clone" data-class="desserts" data-fam="cookies pbb" style="color:var(--cookies)"><circle cx="321" cy="128" r="20"/><text class="nlab klab" x="321" y="88" text-anchor="middle">Black Milk</text><text class="sublab" x="321" y="100" text-anchor="middle">(BCP×Jelly Breath) × Cereal Milk</text></g>
+        </g>
+      </svg>
+    </div>
+
+    <div class="legend">
+      <span class="swatch"><span class="dot" style="background:var(--cookies)"></span>Cookies / GSC</span>
+      <span class="swatch"><span class="dot" style="background:var(--mac)"></span>MAC</span>
+      <span class="swatch"><span class="dot" style="background:var(--sherbet)"></span>Sherbet / Gelato</span>
+      <span class="swatch"><span class="dot" style="background:var(--pbb)"></span>PBB / Breath</span>
+      <span class="swatch"><span class="dot" style="background:var(--diesel)"></span>Sour Diesel / Chem</span>
+      <span class="swatch"><span class="dot" style="background:var(--haze)"></span>Haze / Skunk</span>
+      <span class="swatch"><span class="dot" style="background:var(--afghani)"></span>OG / Afghani</span>
+      <span class="swatch keepkey"><span class="dot"></span>keeper</span>
+      <span class="swatch islandkey"><span class="dot"></span>outcross island</span>
+    </div>
+  </section>
+
+  <!-- 02 GENEALOGY -->
+  <section class="sec">
+    <div class="sec-head">
+      <span class="sec-num">02</span>
+      <div>
+        <h2 class="sec-title">The dessert dynasty</h2>
+        <p class="sec-sub">Three of your keepers are a direct line — Lemon Zest → Limonetto → Black Limo — all on the Lemon Butter Biscuits backbone. Numbers on the arrows are pedigree relatedness (r); the green lines track how the terpene profile shifts down the generations.</p>
+      </div>
+    </div>
+    <div class="treewrap">
+      <svg viewBox="0 0 730 300" role="img" aria-label="Dessert dynasty genealogy with relatedness percentages and terpene differences">
+        <defs>
+          <marker id="arr2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="#E6A951" opacity="0.8"/>
+          </marker>
+        </defs>
+        <path class="garrow" style="opacity:.3;stroke-dasharray:5 4" marker-end="url(#arr2)" d="M150,26 C330,2 560,10 612,148"/>
+        <text class="rlabel gp" x="372" y="13" text-anchor="middle">r 32% · grandmother</text>
+        <path class="garrow" marker-end="url(#arr2)" d="M204,54 C248,54 240,114 276,114"/>
+        <text class="rlabel" x="236" y="73" text-anchor="middle">r 60%</text>
+        <path class="garrow" marker-end="url(#arr2)" d="M204,132 C246,132 250,138 276,138"/>
+        <text class="rlabel gp" x="240" y="151" text-anchor="middle">parent</text>
+        <path class="garrow" marker-end="url(#arr2)" d="M462,124 C498,124 492,168 520,168"/>
+        <text class="rlabel" x="495" y="137" text-anchor="middle">r 53%</text>
+        <path class="garrow" marker-end="url(#arr2)" d="M204,242 C360,242 392,196 520,192"/>
+        <text class="rlabel" x="360" y="231" text-anchor="middle">r 50%</text>
+        <g>
+          <rect class="gbox" x="20" y="24" width="184" height="60"/>
+          <text class="gname" x="34" y="46">Lemon Zest</text>
+          <text class="gsub" x="34" y="61">root mother · LBB × SLH</text>
+          <text class="garoma" x="34" y="75">terpinolene · pine + citrus</text>
+        </g>
+        <g>
+          <rect class="gbox comp" x="20" y="104" width="184" height="54"/>
+          <text class="gname" x="34" y="124" style="font-size:14px">Sherbutter</text>
+          <text class="gsub" x="34" y="139">Sherb Breath × LBB</text>
+          <text class="garoma" x="34" y="152">farnesene + caryophyllene</text>
+        </g>
+        <g>
+          <rect class="gbox" x="20" y="212" width="184" height="60"/>
+          <text class="gname" x="34" y="234">Black Milk</text>
+          <text class="gsub" x="34" y="249">(BCP×Jelly Breath) × Cereal Milk</text>
+          <text class="garoma" x="34" y="263">farnesene · cherry candy</text>
+        </g>
+        <g>
+          <rect class="gbox" x="276" y="92" width="186" height="64"/>
+          <text class="gname" x="290" y="114">Limonetto</text>
+          <text class="gsub" x="290" y="129">daughter · Sherbutter × LZ</text>
+          <text class="garoma" x="290" y="143">grapefruit / limonene lean <tspan class="gftag" dx="3">· F 14.1%</tspan></text>
+        </g>
+        <g>
+          <rect class="gbox" x="520" y="150" width="196" height="64"/>
+          <text class="gname" x="534" y="172">Black Limo</text>
+          <text class="gsub" x="534" y="187">granddaughter</text>
+          <text class="garoma" x="534" y="201" style="font-size:8px">terpinolene + grapefruit + cherry candy</text>
+        </g>
+      </svg>
+    </div>
+  </section>
+
+  <!-- 03 RELATEDNESS -->
+  <section class="sec">
+    <div class="sec-head">
+      <span class="sec-num">03</span>
+      <div>
+        <h2 class="sec-title">Relatedness &amp; inbreeding</h2>
+        <p class="sec-sub">Pedigree coefficient of relationship (r, %) between every pair of keepers, computed from the full documented lineage graph. The blue diagonal is each keeper's inbreeding coefficient (F). Higher = more shared genes by descent. Hover a cell to trace its row and column.</p>
+      </div>
+    </div>
+    <div class="treewrap" style="overflow-x:auto">
+      <table class="rmat"><thead><tr><th class="rcorner"></th><th class="rcol">LZ</th><th class="rcol">Lim</th><th class="rcol">BL</th><th class="rcol">PD</th><th class="rcol">CM</th><th class="rcol">SnS</th><th class="rcol">BM</th><th class="rcol">SQ</th><th class="rcol">MS</th><th class="rcol">SF</th></tr></thead><tbody><tr><th class="rrow" data-k="LZ">Lemon Zest</th><td class="rc diag" data-r="LZ" data-c="LZ" style="background:#11180f" title="Lemon Zest: inbreeding F=0.0%">F&nbsp;0</td><td class="rc" data-r="LZ" data-c="Lim" style="background:rgba(230,169,81,0.602)" title="Lemon Zest ↔ Limonetto: r=60.0%">60</td><td class="rc" data-r="LZ" data-c="BL" style="background:rgba(230,169,81,0.344)" title="Lemon Zest ↔ Black Limo: r=32.0%">32</td><td class="rc" data-r="LZ" data-c="PD" style="background:#0f140e" title="Lemon Zest ↔ Polar Dusk: r=0.0%">·</td><td class="rc" data-r="LZ" data-c="CM" style="background:rgba(230,169,81,0.079)" title="Lemon Zest ↔ Chilled MacMosa: r=3.1%">3.1</td><td class="rc" data-r="LZ" data-c="SnS" style="background:#0f140e" title="Lemon Zest ↔ S.A.G.E 'N Sour: r=0.0%">·</td><td class="rc" data-r="LZ" data-c="BM" style="background:#0f140e" title="Lemon Zest ↔ Black Milk: r=0.0%">·</td><td class="rc" data-r="LZ" data-c="SQ" style="background:#0f140e" title="Lemon Zest ↔ Space Queen: r=0.0%">·</td><td class="rc" data-r="LZ" data-c="MS" style="background:#0f140e" title="Lemon Zest ↔ Midnight Snow: r=0.0%">·</td><td class="rc" data-r="LZ" data-c="SF" style="background:#0f140e" title="Lemon Zest ↔ Sharpe Fuel: r=0.0%">·</td></tr><tr><th class="rrow" data-k="Lim">Limonetto</th><td class="rc" data-r="Lim" data-c="LZ" style="background:rgba(230,169,81,0.602)" title="Limonetto ↔ Lemon Zest: r=60.0%">60</td><td class="rc diag" data-r="Lim" data-c="Lim" style="background:rgba(111,184,214,0.658)" title="Limonetto: inbreeding F=14.1%">F&nbsp;14.1</td><td class="rc" data-r="Lim" data-c="BL" style="background:rgba(230,169,81,0.541)" title="Limonetto ↔ Black Limo: r=53.4%">53</td><td class="rc" data-r="Lim" data-c="PD" style="background:rgba(230,169,81,0.095)" title="Limonetto ↔ Polar Dusk: r=4.9%">4.9</td><td class="rc" data-r="Lim" data-c="CM" style="background:rgba(230,169,81,0.077)" title="Limonetto ↔ Chilled MacMosa: r=2.9%">2.9</td><td class="rc" data-r="Lim" data-c="SnS" style="background:#0f140e" title="Limonetto ↔ S.A.G.E 'N Sour: r=0.0%">·</td><td class="rc" data-r="Lim" data-c="BM" style="background:#0f140e" title="Limonetto ↔ Black Milk: r=0.0%">·</td><td class="rc" data-r="Lim" data-c="SQ" style="background:#0f140e" title="Limonetto ↔ Space Queen: r=0.0%">·</td><td class="rc" data-r="Lim" data-c="MS" style="background:#0f140e" title="Limonetto ↔ Midnight Snow: r=0.0%">·</td><td class="rc" data-r="Lim" data-c="SF" style="background:rgba(230,169,81,0.056)" title="Limonetto ↔ Sharpe Fuel: r=0.7%">0.7</td></tr><tr><th class="rrow" data-k="BL">Black Limo</th><td class="rc" data-r="BL" data-c="LZ" style="background:rgba(230,169,81,0.344)" title="Black Limo ↔ Lemon Zest: r=32.0%">32</td><td class="rc" data-r="BL" data-c="Lim" style="background:rgba(230,169,81,0.541)" title="Black Limo ↔ Limonetto: r=53.4%">53</td><td class="rc diag" data-r="BL" data-c="BL" style="background:#11180f" title="Black Limo: inbreeding F=0.0%">F&nbsp;0</td><td class="rc" data-r="BL" data-c="PD" style="background:rgba(230,169,81,0.074)" title="Black Limo ↔ Polar Dusk: r=2.6%">2.6</td><td class="rc" data-r="BL" data-c="CM" style="background:rgba(230,169,81,0.065)" title="Black Limo ↔ Chilled MacMosa: r=1.6%">1.6</td><td class="rc" data-r="BL" data-c="SnS" style="background:#0f140e" title="Black Limo ↔ S.A.G.E 'N Sour: r=0.0%">·</td><td class="rc" data-r="BL" data-c="BM" style="background:rgba(230,169,81,0.510)" title="Black Limo ↔ Black Milk: r=50.0%">50</td><td class="rc" data-r="BL" data-c="SQ" style="background:#0f140e" title="Black Limo ↔ Space Queen: r=0.0%">·</td><td class="rc" data-r="BL" data-c="MS" style="background:#0f140e" title="Black Limo ↔ Midnight Snow: r=0.0%">·</td><td class="rc" data-r="BL" data-c="SF" style="background:rgba(230,169,81,0.054)" title="Black Limo ↔ Sharpe Fuel: r=0.4%">0.4</td></tr><tr><th class="rrow" data-k="PD">Polar Dusk</th><td class="rc" data-r="PD" data-c="LZ" style="background:#0f140e" title="Polar Dusk ↔ Lemon Zest: r=0.0%">·</td><td class="rc" data-r="PD" data-c="Lim" style="background:rgba(230,169,81,0.095)" title="Polar Dusk ↔ Limonetto: r=4.9%">4.9</td><td class="rc" data-r="PD" data-c="BL" style="background:rgba(230,169,81,0.074)" title="Polar Dusk ↔ Black Limo: r=2.6%">2.6</td><td class="rc diag" data-r="PD" data-c="PD" style="background:rgba(111,184,214,0.364)" title="Polar Dusk: inbreeding F=7.8%">F&nbsp;7.8</td><td class="rc" data-r="PD" data-c="CM" style="background:#0f140e" title="Polar Dusk ↔ Chilled MacMosa: r=0.0%">·</td><td class="rc" data-r="PD" data-c="SnS" style="background:#0f140e" title="Polar Dusk ↔ S.A.G.E 'N Sour: r=0.0%">·</td><td class="rc" data-r="PD" data-c="BM" style="background:#0f140e" title="Polar Dusk ↔ Black Milk: r=0.0%">·</td><td class="rc" data-r="PD" data-c="SQ" style="background:#0f140e" title="Polar Dusk ↔ Space Queen: r=0.0%">·</td><td class="rc" data-r="PD" data-c="MS" style="background:#0f140e" title="Polar Dusk ↔ Midnight Snow: r=0.0%">·</td><td class="rc" data-r="PD" data-c="SF" style="background:rgba(230,169,81,0.085)" title="Polar Dusk ↔ Sharpe Fuel: r=3.8%">3.8</td></tr><tr><th class="rrow" data-k="CM">Chilled MacMosa</th><td class="rc" data-r="CM" data-c="LZ" style="background:rgba(230,169,81,0.079)" title="Chilled MacMosa ↔ Lemon Zest: r=3.1%">3.1</td><td class="rc" data-r="CM" data-c="Lim" style="background:rgba(230,169,81,0.077)" title="Chilled MacMosa ↔ Limonetto: r=2.9%">2.9</td><td class="rc" data-r="CM" data-c="BL" style="background:rgba(230,169,81,0.065)" title="Chilled MacMosa ↔ Black Limo: r=1.6%">1.6</td><td class="rc" data-r="CM" data-c="PD" style="background:#0f140e" title="Chilled MacMosa ↔ Polar Dusk: r=0.0%">·</td><td class="rc diag" data-r="CM" data-c="CM" style="background:#11180f" title="Chilled MacMosa: inbreeding F=0.0%">F&nbsp;0</td><td class="rc" data-r="CM" data-c="SnS" style="background:#0f140e" title="Chilled MacMosa ↔ S.A.G.E 'N Sour: r=0.0%">·</td><td class="rc" data-r="CM" data-c="BM" style="background:#0f140e" title="Chilled MacMosa ↔ Black Milk: r=0.0%">·</td><td class="rc" data-r="CM" data-c="SQ" style="background:#0f140e" title="Chilled MacMosa ↔ Space Queen: r=0.0%">·</td><td class="rc" data-r="CM" data-c="MS" style="background:#0f140e" title="Chilled MacMosa ↔ Midnight Snow: r=0.0%">·</td><td class="rc" data-r="CM" data-c="SF" style="background:#0f140e" title="Chilled MacMosa ↔ Sharpe Fuel: r=0.0%">·</td></tr><tr><th class="rrow" data-k="SnS">S.A.G.E 'N Sour</th><td class="rc" data-r="SnS" data-c="LZ" style="background:#0f140e" title="S.A.G.E 'N Sour ↔ Lemon Zest: r=0.0%">·</td><td class="rc" data-r="SnS" data-c="Lim" style="background:#0f140e" title="S.A.G.E 'N Sour ↔ Limonetto: r=0.0%">·</td><td class="rc" data-r="SnS" data-c="BL" style="background:#0f140e" title="S.A.G.E 'N Sour ↔ Black Limo: r=0.0%">·</td><td class="rc" data-r="SnS" data-c="PD" style="background:#0f140e" title="S.A.G.E 'N Sour ↔ Polar Dusk: r=0.0%">·</td><td class="rc" data-r="SnS" data-c="CM" style="background:#0f140e" title="S.A.G.E 'N Sour ↔ Chilled MacMosa: r=0.0%">·</td><td class="rc diag" data-r="SnS" data-c="SnS" style="background:#11180f" title="S.A.G.E 'N Sour: inbreeding F=0.0%">F&nbsp;0</td><td class="rc" data-r="SnS" data-c="BM" style="background:#0f140e" title="S.A.G.E 'N Sour ↔ Black Milk: r=0.0%">·</td><td class="rc" data-r="SnS" data-c="SQ" style="background:#0f140e" title="S.A.G.E 'N Sour ↔ Space Queen: r=0.0%">·</td><td class="rc" data-r="SnS" data-c="MS" style="background:#0f140e" title="S.A.G.E 'N Sour ↔ Midnight Snow: r=0.0%">·</td><td class="rc" data-r="SnS" data-c="SF" style="background:#0f140e" title="S.A.G.E 'N Sour ↔ Sharpe Fuel: r=0.0%">·</td></tr><tr><th class="rrow" data-k="BM">Black Milk</th><td class="rc" data-r="BM" data-c="LZ" style="background:#0f140e" title="Black Milk ↔ Lemon Zest: r=0.0%">·</td><td class="rc" data-r="BM" data-c="Lim" style="background:#0f140e" title="Black Milk ↔ Limonetto: r=0.0%">·</td><td class="rc" data-r="BM" data-c="BL" style="background:rgba(230,169,81,0.510)" title="Black Milk ↔ Black Limo: r=50.0%">50</td><td class="rc" data-r="BM" data-c="PD" style="background:#0f140e" title="Black Milk ↔ Polar Dusk: r=0.0%">·</td><td class="rc" data-r="BM" data-c="CM" style="background:#0f140e" title="Black Milk ↔ Chilled MacMosa: r=0.0%">·</td><td class="rc" data-r="BM" data-c="SnS" style="background:#0f140e" title="Black Milk ↔ S.A.G.E 'N Sour: r=0.0%">·</td><td class="rc diag" data-r="BM" data-c="BM" style="background:#11180f" title="Black Milk: inbreeding F=0.0%">F&nbsp;0</td><td class="rc" data-r="BM" data-c="SQ" style="background:#0f140e" title="Black Milk ↔ Space Queen: r=0.0%">·</td><td class="rc" data-r="BM" data-c="MS" style="background:#0f140e" title="Black Milk ↔ Midnight Snow: r=0.0%">·</td><td class="rc" data-r="BM" data-c="SF" style="background:#0f140e" title="Black Milk ↔ Sharpe Fuel: r=0.0%">·</td></tr><tr><th class="rrow" data-k="SQ">Space Queen</th><td class="rc" data-r="SQ" data-c="LZ" style="background:#0f140e" title="Space Queen ↔ Lemon Zest: r=0.0%">·</td><td class="rc" data-r="SQ" data-c="Lim" style="background:#0f140e" title="Space Queen ↔ Limonetto: r=0.0%">·</td><td class="rc" data-r="SQ" data-c="BL" style="background:#0f140e" title="Space Queen ↔ Black Limo: r=0.0%">·</td><td class="rc" data-r="SQ" data-c="PD" style="background:#0f140e" title="Space Queen ↔ Polar Dusk: r=0.0%">·</td><td class="rc" data-r="SQ" data-c="CM" style="background:#0f140e" title="Space Queen ↔ Chilled MacMosa: r=0.0%">·</td><td class="rc" data-r="SQ" data-c="SnS" style="background:#0f140e" title="Space Queen ↔ S.A.G.E 'N Sour: r=0.0%">·</td><td class="rc" data-r="SQ" data-c="BM" style="background:#0f140e" title="Space Queen ↔ Black Milk: r=0.0%">·</td><td class="rc diag" data-r="SQ" data-c="SQ" style="background:#11180f" title="Space Queen: inbreeding F=0.0%">F&nbsp;0</td><td class="rc" data-r="SQ" data-c="MS" style="background:#0f140e" title="Space Queen ↔ Midnight Snow: r=0.0%">·</td><td class="rc" data-r="SQ" data-c="SF" style="background:#0f140e" title="Space Queen ↔ Sharpe Fuel: r=0.0%">·</td></tr><tr><th class="rrow" data-k="MS">Midnight Snow</th><td class="rc" data-r="MS" data-c="LZ" style="background:#0f140e" title="Midnight Snow ↔ Lemon Zest: r=0.0%">·</td><td class="rc" data-r="MS" data-c="Lim" style="background:#0f140e" title="Midnight Snow ↔ Limonetto: r=0.0%">·</td><td class="rc" data-r="MS" data-c="BL" style="background:#0f140e" title="Midnight Snow ↔ Black Limo: r=0.0%">·</td><td class="rc" data-r="MS" data-c="PD" style="background:#0f140e" title="Midnight Snow ↔ Polar Dusk: r=0.0%">·</td><td class="rc" data-r="MS" data-c="CM" style="background:#0f140e" title="Midnight Snow ↔ Chilled MacMosa: r=0.0%">·</td><td class="rc" data-r="MS" data-c="SnS" style="background:#0f140e" title="Midnight Snow ↔ S.A.G.E 'N Sour: r=0.0%">·</td><td class="rc" data-r="MS" data-c="BM" style="background:#0f140e" title="Midnight Snow ↔ Black Milk: r=0.0%">·</td><td class="rc" data-r="MS" data-c="SQ" style="background:#0f140e" title="Midnight Snow ↔ Space Queen: r=0.0%">·</td><td class="rc diag" data-r="MS" data-c="MS" style="background:#11180f" title="Midnight Snow: inbreeding F=0.0%">F&nbsp;0</td><td class="rc" data-r="MS" data-c="SF" style="background:#0f140e" title="Midnight Snow ↔ Sharpe Fuel: r=0.0%">·</td></tr><tr><th class="rrow" data-k="SF">Sharpe Fuel</th><td class="rc" data-r="SF" data-c="LZ" style="background:#0f140e" title="Sharpe Fuel ↔ Lemon Zest: r=0.0%">·</td><td class="rc" data-r="SF" data-c="Lim" style="background:rgba(230,169,81,0.056)" title="Sharpe Fuel ↔ Limonetto: r=0.7%">0.7</td><td class="rc" data-r="SF" data-c="BL" style="background:rgba(230,169,81,0.054)" title="Sharpe Fuel ↔ Black Limo: r=0.4%">0.4</td><td class="rc" data-r="SF" data-c="PD" style="background:rgba(230,169,81,0.085)" title="Sharpe Fuel ↔ Polar Dusk: r=3.8%">3.8</td><td class="rc" data-r="SF" data-c="CM" style="background:#0f140e" title="Sharpe Fuel ↔ Chilled MacMosa: r=0.0%">·</td><td class="rc" data-r="SF" data-c="SnS" style="background:#0f140e" title="Sharpe Fuel ↔ S.A.G.E 'N Sour: r=0.0%">·</td><td class="rc" data-r="SF" data-c="BM" style="background:#0f140e" title="Sharpe Fuel ↔ Black Milk: r=0.0%">·</td><td class="rc" data-r="SF" data-c="SQ" style="background:#0f140e" title="Sharpe Fuel ↔ Space Queen: r=0.0%">·</td><td class="rc" data-r="SF" data-c="MS" style="background:#0f140e" title="Sharpe Fuel ↔ Midnight Snow: r=0.0%">·</td><td class="rc diag" data-r="SF" data-c="SF" style="background:#11180f" title="Sharpe Fuel: inbreeding F=0.0%">F&nbsp;0</td></tr></tbody></table>
+
+      <div class="rkey">
+        <span class="sw"><span class="sb" style="background:rgba(230,169,81,.85)"></span>r ≥ 50 · parent / sib</span>
+        <span class="sw"><span class="sb" style="background:rgba(230,169,81,.45)"></span>25–50 · grandparent / half-sib</span>
+        <span class="sw"><span class="sb" style="background:rgba(230,169,81,.14)"></span>1–12 · distant</span>
+        <span class="sw"><span class="sb" style="background:#0f140e;border:1px solid var(--line)"></span>0 · unrelated</span>
+        <span class="sw"><span class="sb" style="background:rgba(111,184,214,.6)"></span>F · inbreeding (diagonal)</span>
+      </div>
+    </div>
+    <div class="insight" style="margin-top:14px">
+      <p><b>The numbers confirm the structure.</b> Your dessert dynasty is genuinely tight: Lemon Zest ↔ Limonetto sits at <b>60%</b> — above the 50% of a clean parent-offspring, because they re-share Lemon Butter Biscuits — Limonetto ↔ Black Limo at <b>53%</b>, and Black Milk ↔ Black Limo at a clean <b>50%</b>. Limonetto is <b>14.1% inbred</b> and Polar Dusk <b>7.8%</b> (Sunset Sherbet three times over); neither is alarming, but both are worth knowing before you breed them back into their own lines.</p>
+      <p><b>Three outcross islands are mathematically clean.</b> S.A.G.E 'N Sour, Space Queen and Midnight Snow show <b>0%</b> relatedness to everything — no shared documented ancestor anywhere — so each resets relatedness to zero and recovers full heterosis when crossed into the dynasty. Three others are only faintly tied in: Chilled MacMosa (~3% via MAC), Polar Dusk (~3–5% via Sunset Sherbet) and <b>Sharpe Fuel</b> (~4% to Polar Dusk through the Gelato / Sunset Sherbet inside its Georgia Pie side, plus a Cookies thread via Cookies S1) — outcross-ish, but not pristine.</p>
+      <div class="bnote">
+        <h4>Breeder's note — what these numbers mean for you</h4>
+        <p><b>The inbred dessert line is a deliberate trade.</b> A 60% Lemon Zest↔Limonetto bond and Limonetto's 14.1% inbreeding mean the line breeds <b>true</b> — the lemon→grapefruit character is fixed, seeds come up uniform, and you can trust the profile generation to generation. The cost is <b>inbreeding depression</b>: as relatedness climbs you gradually lose vigour, yield and seed-set, and you concentrate any hidden recessive faults. You're near the point where another tight cross back into the line gives diminishing returns.</p>
+        <p><b>Your clean outcross islands are the antidote.</b> S.A.G.E 'N Sour, Space Queen and Midnight Snow share no documented ancestor with anything, so crossing one in restores <b>heterosis</b> — the hybrid-vigour rebound in yield, vigour and resilience — and injects genuinely new terpenes (Space Queen's cherry-menthol, say). The trade-off is that you also break the uniformity, so you're back to phenohunting through variable offspring to recover your signature.</p>
+        <p><b>Black Milk is the model for threading that needle.</b> It's unrelated to your lemon line (0%) yet still a Cookies-family dessert, so Black Limo got a full heterosis bump and a new cherry-candy/farnesene dimension <b>without</b> fighting the existing flavour. That's the play: outcross to something unrelated but stylistically compatible, then select back toward your profile over a couple of generations.</p>
+      </div>
+      <p style="color:var(--faint);font-size:12px;margin:0">Method: recursive kinship on the documented pedigree, treating the deepest recorded cultivars as unrelated founders. Deep shared Cookies/GSC ancestry below that depth isn't fully counted, so several figures — Sharpe Fuel's especially — are conservative floors and true relatedness runs a little higher. Read a literal 0 as "no documented shared ancestor," not a guarantee of none.</p>
+    </div>
+  </section>
+
+  <!-- 04 REGISTRY -->
+  <section class="sec">
+    <div class="sec-head">
+      <span class="sec-num">04</span>
+      <div>
+        <h2 class="sec-title">Keeper registry</h2>
+        <p class="sec-sub">Confirmed parentage per keeper. Lab panels (THC, top terpenes, and SC Labs terpene class) shown where a High North COA is on file. Deepest genetic tiers are breeder-dependent and simplified for legibility.</p>
+      </div>
+    </div>
+
+    <div class="grid">
+
+      <div class="card your">
+        <span class="tag verified">verified · Hash Seed · root</span>
+        <h3>Lemon Zest</h3>
+        <p class="lin">Lemon Butter Biscuits <span class="x">×</span> Super Lemon Haze
+          <span class="sub">LBB = Black Frost × Peanut Butter Breath<br>Black Frost = MAC × Magnum Opus<br>SLH = Super Silver Haze × Lemon Skunk</span>
+        </p>
+        <p class="note">Your root mother and the bridge node — the only keeper touching both the dessert core and the haze/diesel axis. Parent of Limonetto, grandparent of Black Limo.</p>
+        <div class="chips">
+          <span class="chip" style="background:var(--mac)">MAC</span>
+          <span class="chip" style="background:var(--pbb)">PBB</span>
+          <span class="chip" style="background:var(--cookies)">Cookies</span>
+          <span class="chip" style="background:var(--haze)">Haze</span>
+        </div>
+        <div class="foot"><span>~56d flower</span><span>wood · pine · citrus</span></div>
+        <div class="lab">
+          <div class="labhead"><span>THC <b>15.8%</b></span><span>Total terps <b>5.50%</b> · 100th</span></div>
+          <div class="cann">THCA 17.24% · <span class="hot">CBGA 1.90%</span> · CBG 0.13% · D9-THC 0.65% · total 20.0%</div>
+          <div class="terprow"><span class="tname">Terpinolene</span><span class="tbar dom"><i style="width:100%"></i></span><span class="tval">2.56</span></div>
+          <div class="terprow"><span class="tname">Ocimene</span><span class="tbar"><i style="width:26%"></i></span><span class="tval">0.68</span></div>
+          <div class="terprow"><span class="tname">Farnesene</span><span class="tbar"><i style="width:21%"></i></span><span class="tval">0.54</span></div>
+          <div class="terprow"><span class="tname">Myrcene</span><span class="tbar"><i style="width:20%"></i></span><span class="tval">0.51</span></div>
+          <div class="terprow"><span class="tname">Caryophyllene</span><span class="tbar"><i style="width:8%"></i></span><span class="tval">0.19</span></div>
+          <div class="scl"><span class="sclcode">TXX</span> SC Labs · <b>Jacks &amp; Haze</b> · energizing, cerebral</div>
+        </div>
+      </div>
+
+      <div class="card your">
+        <span class="tag your">your cross · daughter</span>
+        <h3>Limonetto</h3>
+        <p class="lin">Sherbutter <span class="x">×</span> Lemon Zest
+          <span class="sub">Sherbutter = Sherb Breath × Lemon&nbsp;Butter&nbsp;Biscuits<br>Sherb Breath = Sunset Sherbet × Mendo&nbsp;Breath&nbsp;F2</span>
+        </p>
+        <p class="note">A Lemon Zest line reinforced with sherbet + breath. Carries the LBB backbone from both sides — very tight to its mother.</p>
+        <div class="chips">
+          <span class="chip" style="background:var(--cookies)">Cookies</span>
+          <span class="chip" style="background:var(--pbb)">Breath</span>
+          <span class="chip" style="background:var(--sherbet)">Sherbet</span>
+          <span class="chip" style="background:var(--mac)">MAC</span>
+        </div>
+        <div class="foot"><span>flower n/a</span><span>lemon · sherbet</span></div>
+        <div class="estlab">
+          <div class="esthead"><span>Estimated profile</span><span class="estbadge">pending testing</span></div>
+          <div class="labhead"><span>THC <b>~18–19%</b></span><span>Total terps <b>~4.5%</b></span></div>
+          <div class="terprow"><span class="tname">Terpinolene</span><span class="tbar est dom"><i style="width:100%"></i></span><span class="tval">~1.3</span></div>
+          <div class="terprow"><span class="tname">Caryophyllene</span><span class="tbar est"><i style="width:46%"></i></span><span class="tval">~0.6</span></div>
+          <div class="terprow"><span class="tname">Farnesene</span><span class="tbar est"><i style="width:38%"></i></span><span class="tval">~0.5</span></div>
+          <div class="terprow"><span class="tname">Limonene</span><span class="tbar est"><i style="width:23%"></i></span><span class="tval">~0.3</span></div>
+          <div class="terprow"><span class="tname">Myrcene</span><span class="tbar est"><i style="width:23%"></i></span><span class="tval">~0.3</span></div>
+          <div class="scl"><span class="predtag">est class</span> SC Labs · <b>Jacks &amp; Haze ↔ Desserts</b></div>
+          <div class="estbasis">Mid-parent of Lemon Zest (TXX, measured) + Sherbutter — Sherb Breath grandparent data below. Good basis; your lemon selection likely tips it terpinolene-side.</div>
+        </div>
+        <div class="lab">
+          <div class="parentlab">Sherb Breath · grandparent (no COA on Limonetto itself)</div>
+          <div class="labhead"><span>THC <b>24.6%</b></span><span>Total terps <b>4.08%</b></span></div>
+          <div class="cann">THCA 27.45% · <span class="hot">CBGA 2.11%</span> · CBG 0.14% · total 30.4%</div>
+          <div class="terprow"><span class="tname">Farnesene</span><span class="tbar dom"><i style="width:100%"></i></span><span class="tval">1.16</span></div>
+          <div class="terprow"><span class="tname">Caryophyllene</span><span class="tbar"><i style="width:99%"></i></span><span class="tval">1.14</span></div>
+          <div class="terprow"><span class="tname">Limonene</span><span class="tbar"><i style="width:40%"></i></span><span class="tval">0.47</span></div>
+          <div class="terprow"><span class="tname">Myrcene</span><span class="tbar"><i style="width:40%"></i></span><span class="tval">0.47</span></div>
+          <div class="terprow"><span class="tname">Humulene</span><span class="tbar"><i style="width:25%"></i></span><span class="tval">0.30</span></div>
+          <div class="scl"><span class="sclcode">CXX</span> SC Labs · <b>Desserts</b> · farnesene-led (uncoded), caryophyllene co-lead</div>
+        </div>
+      </div>
+
+      <div class="card your">
+        <span class="tag your">your cross · granddaughter</span>
+        <h3>Black Limo</h3>
+        <p class="lin">Limonetto <span class="x">×</span> Black Milk</p>
+        <p class="note">Second-generation keeper. Cookies-heavy through Cereal Milk + the LBB backbone; PBB enters only via LBB, so it's a minor, recessive share — consistent with the candy-grapefruit pheno from the Purple Punch / Black Cherry / lemon fruit stack.</p>
+        <div class="chips">
+          <span class="chip" style="background:var(--cookies)">Cookies</span>
+          <span class="chip" style="background:var(--sherbet)">Sherbet</span>
+          <span class="chip" style="background:var(--pbb)">PBB (recessive)</span>
+        </div>
+        <div class="foot"><span>flower n/a</span><span>candy grapefruit pheno</span></div>
+        <div class="estlab">
+          <div class="esthead"><span>Estimated profile</span><span class="estbadge">pending testing</span></div>
+          <div class="labhead"><span>THC <b>~19–20%</b></span><span>Total terps <b>~5%</b></span></div>
+          <div class="terprow"><span class="tname">Farnesene</span><span class="tbar est dom"><i style="width:100%"></i></span><span class="tval">~1.3</span></div>
+          <div class="terprow"><span class="tname">Caryophyllene</span><span class="tbar est"><i style="width:54%"></i></span><span class="tval">~0.7</span></div>
+          <div class="terprow"><span class="tname">Terpinolene</span><span class="tbar est"><i style="width:46%"></i></span><span class="tval">~0.6</span></div>
+          <div class="terprow"><span class="tname">Limonene</span><span class="tbar est"><i style="width:38%"></i></span><span class="tval">~0.5</span></div>
+          <div class="terprow"><span class="tname">Myrcene</span><span class="tbar est"><i style="width:23%"></i></span><span class="tval">~0.3</span></div>
+          <div class="scl"><span class="predtag">est class</span> SC Labs · <b>Desserts</b> · farnesene-forward</div>
+          <div class="estbasis">Mid-parent of Limonetto (est) + Black Milk (CLO, measured). Both sides farnesene-led, so the farnesene estimate is the most confident part.</div>
+        </div>
+      </div>
+
+      <div class="card your">
+        <span class="tag clone">clone-only · sel. SpaceSherpa</span>
+        <h3>Black Milk</h3>
+        <p class="lin">(Black Cherry Punch <span class="x">×</span> Jelly Breath BX1) <span class="x">×</span> Cereal Milk
+          <span class="sub">Cereal Milk = Y Life × Snowman (pure Cookies / Cherry Pie)</span>
+        </p>
+        <p class="note">A clone-only cut: Right Hemisphere seed line, keeper selected by SpaceSherpa, run via Direwolf Collective — which is why the COA reads lot "Space Sherpa." Brings cereal-milk Cookies plus Purple Punch / Black Cherry fruit into Black Limo. No PBB on this side.</p>
+        <div class="chips">
+          <span class="chip" style="background:var(--cookies)">Cookies</span>
+          <span class="chip" style="background:var(--pbb)">Breath</span>
+        </div>
+        <div class="foot"><span>tested Apr '22</span><span>wood · pepper · citrus</span></div>
+        <div class="lab">
+          <div class="labhead"><span>THC <b>20.6%</b></span><span>Total terps <b>5.93%</b> · 100th</span></div>
+          <div class="cann">THCA 23.16% · CBGA 0.97% · CBG 0.14% · D9-THC 0.27% · total 24.6%</div>
+          <div class="terprow"><span class="tname">Farnesene</span><span class="tbar dom"><i style="width:100%"></i></span><span class="tval">2.29</span></div>
+          <div class="terprow"><span class="tname">Caryophyllene</span><span class="tbar"><i style="width:44%"></i></span><span class="tval">1.01</span></div>
+          <div class="terprow"><span class="tname">Limonene</span><span class="tbar"><i style="width:31%"></i></span><span class="tval">0.72</span></div>
+          <div class="terprow"><span class="tname">Ocimene</span><span class="tbar"><i style="width:24%"></i></span><span class="tval">0.55</span></div>
+          <div class="terprow"><span class="tname">Bisabolol</span><span class="tbar"><i style="width:11%"></i></span><span class="tval">0.25</span></div>
+          <div class="scl"><span class="sclcode">CLO</span> SC Labs · <b>Desserts</b> · stimulating, comforting</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <span class="tag your">Exotic Genetix · your phenohunt</span>
+        <h3>Polar Dusk</h3>
+        <p class="lin">Sunset Runtz <span class="x">×</span> Bakers Dozen <span class="x">(rev.)</span>
+          <span class="sub">SR = Sunset Sherbet × Runtz<br>BD = Milk &amp; Cookies × Rainbow Chip · all Exotic</span>
+        </p>
+        <p class="note">An Exotic Genetix seed line — this keeper is your own phenohunt. Sunset Sherbet enters from three independent routes, so it's the dominant backbone — the expression shows through rather than hiding. Built for resin / solventless.</p>
+        <div class="chips">
+          <span class="chip" style="background:var(--sherbet)">Sherbet</span>
+          <span class="chip" style="background:var(--cookies)">Cookies</span>
+        </div>
+        <div class="foot"><span>~63–70d est.</span><span>resin / solventless</span></div>
+        <div class="estlab">
+          <div class="esthead"><span>Estimated profile · lineage only</span><span class="estbadge">pending testing</span></div>
+          <div class="labhead"><span>THC <b>~24–26%</b></span><span>Total terps <b>~2–2.5%</b></span></div>
+          <div class="terprow"><span class="tname">Caryophyllene</span><span class="tbar est dom"><i style="width:100%"></i></span><span class="tval">~0.6</span></div>
+          <div class="terprow"><span class="tname">Limonene</span><span class="tbar est"><i style="width:83%"></i></span><span class="tval">~0.5</span></div>
+          <div class="terprow"><span class="tname">Myrcene</span><span class="tbar est"><i style="width:50%"></i></span><span class="tval">~0.3</span></div>
+          <div class="terprow"><span class="tname">Linalool</span><span class="tbar est"><i style="width:33%"></i></span><span class="tval">~0.2</span></div>
+          <div class="scl"><span class="predtag">est class</span> SC Labs · <b>Desserts</b></div>
+          <div class="estbasis">No parent COA — projected from Exotic's Sherbet/Cookies lineage. Treat as a rough chemotype guess, not a value prediction.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <span class="tag your">Sacred Cut · your phenohunt</span>
+        <h3>Chilled MacMosa</h3>
+        <p class="lin">Mimosa <span class="x">×</span> Mac Stomper
+          <span class="sub">Mimosa = Clementine × Purple Punch<br>Mac Stomper = MAC × Grape Stomper OG <span class="x">(Chem/Sour D)</span></span>
+        </p>
+        <p class="note">Your phenohunt from Sacred Cut Seed Co seed, and a hidden bridge: Grape Stomper drags Chemdawg/Sour Diesel into a dessert-flavoured cut, so it reaches the fuel axis as well as MAC/Cookies — which is why it tests OGs &amp; Gas despite the dessert genetics.</p>
+        <div class="chips">
+          <span class="chip" style="background:var(--mac)">MAC</span>
+          <span class="chip" style="background:var(--cookies)">Cookies</span>
+          <span class="chip" style="background:var(--diesel)">Diesel</span>
+          <span class="chip" style="background:var(--afghani)">OG</span>
+        </div>
+        <div class="foot"><span>~9wk flower</span><span>wood · pepper · orange</span></div>
+        <div class="lab">
+          <div class="labhead"><span>THC <b>17.9%</b></span><span>Total terps <b>2.04%</b> · 78th</span></div>
+          <div class="cann">THCA 20.16% · CBGA 0.91% · <span class="hot">CBD 0.12% · 94th</span> · CBDA 0.14% · total 21.6%</div>
+          <div class="terprow"><span class="tname">Caryophyllene</span><span class="tbar dom"><i style="width:100%"></i></span><span class="tval">0.52</span></div>
+          <div class="terprow"><span class="tname">Limonene</span><span class="tbar"><i style="width:67%"></i></span><span class="tval">0.35</span></div>
+          <div class="terprow"><span class="tname">Farnesene</span><span class="tbar"><i style="width:67%"></i></span><span class="tval">0.35</span></div>
+          <div class="terprow"><span class="tname">Linalool</span><span class="tbar"><i style="width:45%"></i></span><span class="tval">0.23</span></div>
+          <div class="terprow"><span class="tname">Myrcene</span><span class="tbar"><i style="width:29%"></i></span><span class="tval">0.15</span></div>
+          <div class="scl"><span class="sclcode">CLX</span> SC Labs · <b>OGs &amp; Gas</b> · uplifting, relaxing</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <span class="tag your">Chimera · your phenohunt</span>
+        <h3>Sharpe Fuel</h3>
+        <p class="lin">(Legends OG <span class="x">×</span> Cookies S1) <span class="x">×</span> (Zwish <span class="x">×</span> Georgia Pie)
+          <span class="sub">OG-fuel from Legends OG, on Cookies S1 + Georgia Pie,<br>with Zkittlez fruit from Zwish</span>
+        </p>
+        <p class="note">Your phenohunt from Chimera Genetics seed. The "fuel" is Legends OG, not Sour Diesel. Sits adjacent to your dessert palette through Cookies S1 and Georgia Pie's Gelato side.</p>
+        <div class="chips">
+          <span class="chip" style="background:var(--afghani)">OG</span>
+          <span class="chip" style="background:var(--cookies)">Cookies</span>
+          <span class="chip" style="background:var(--sherbet)">Gelato</span>
+        </div>
+        <div class="foot"><span>flower n/a</span><span>gas · dessert</span></div>
+        <div class="estlab">
+          <div class="esthead"><span>Estimated profile · lineage only</span><span class="estbadge">pending testing</span></div>
+          <div class="labhead"><span>THC <b>~24–27%</b></span><span>Total terps <b>~2–3%</b></span></div>
+          <div class="terprow"><span class="tname">Caryophyllene</span><span class="tbar est dom"><i style="width:100%"></i></span><span class="tval">~0.7</span></div>
+          <div class="terprow"><span class="tname">Limonene</span><span class="tbar est"><i style="width:86%"></i></span><span class="tval">~0.6</span></div>
+          <div class="terprow"><span class="tname">Myrcene</span><span class="tbar est"><i style="width:57%"></i></span><span class="tval">~0.4</span></div>
+          <div class="terprow"><span class="tname">Humulene</span><span class="tbar est"><i style="width:29%"></i></span><span class="tval">~0.2</span></div>
+          <div class="scl"><span class="predtag">est class</span> SC Labs · <b>OGs &amp; Gas</b></div>
+          <div class="estbasis">No parent COA — projected from Legends OG fuel + Cookies S1 / Georgia Pie Gelato. Chimera gear tends to run hot, hence the high THC estimate.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <span class="tag your">T.H.Seeds · your phenohunt</span>
+        <h3>S.A.G.E 'N Sour</h3>
+        <p class="lin">S.A.G.E <span class="x">×</span> Sour Diesel
+          <span class="sub">S.A.G.E = Sativa Afghani Genetic Equilibrium</span>
+        </p>
+        <p class="note">Your phenohunt from T.H.Seeds, and your sativa-fuel pole — the cleanest Sour Diesel + Afghani route in the set. Lab also flags a notable <b>1.21% THCVA</b> (a THCV precursor), which fits the Afghani/landrace side of S.A.G.E.</p>
+        <div class="chips">
+          <span class="chip" style="background:var(--diesel)">Diesel</span>
+          <span class="chip" style="background:var(--haze)">Haze</span>
+          <span class="chip" style="background:var(--afghani)">Afghani</span>
+        </div>
+        <div class="foot"><span>~63d flower</span><span>limonene · gas · earth</span></div>
+        <div class="lab">
+          <div class="labhead"><span>THC <b>18.8%</b></span><span>Total terps <b>1.38%</b></span></div>
+          <div class="cann">THCA 20.71% · <span class="hot">THCVA 1.21% (THCV)</span> · CBGA 0.98% · CBCA 0.24% · total 24.0%</div>
+          <div class="terprow"><span class="tname">Limonene</span><span class="tbar dom"><i style="width:100%"></i></span><span class="tval">0.31</span></div>
+          <div class="terprow"><span class="tname">Caryophyllene</span><span class="tbar"><i style="width:94%"></i></span><span class="tval">0.29</span></div>
+          <div class="terprow"><span class="tname">Farnesene</span><span class="tbar"><i style="width:56%"></i></span><span class="tval">0.17</span></div>
+          <div class="terprow"><span class="tname">Ocimene</span><span class="tbar"><i style="width:46%"></i></span><span class="tval">0.14</span></div>
+          <div class="terprow"><span class="tname">Humulene</span><span class="tbar"><i style="width:39%"></i></span><span class="tval">0.12</span></div>
+          <div class="scl"><span class="sclcode">LCX</span> SC Labs · <b>OGs &amp; Gas</b> · uplifting, analgesic</div>
+        </div>
+      </div>
+
+      <div class="card island">
+        <span class="tag island">outcross island · clone-only</span>
+        <h3>Space Queen</h3>
+        <p class="lin">Romulan <span class="x">×</span> Cinderella 99
+          <span class="sub">Vic High's selection · run via Scallywag</span>
+        </p>
+        <p class="note">A clone-only cut, originally selected by Vic High and sourced via Scallywag. Zero Cookies / Breath / OG — completely outside the dynasty. Fast finish from C99, but Romulan drives an unusual <b>cherry + menthol/Vicks (camphor)</b> nose. Your cleanest outcross for vigour and speed.</p>
+        <div class="chips">
+          <span class="chip" style="background:var(--haze)">Haze</span>
+          <span class="chip" style="background:var(--afghani)">Afghani</span>
+        </div>
+        <div class="foot"><span>~56–60d flower</span><span>cherry · menthol · Vicks</span></div>
+        <div class="estlab">
+          <div class="esthead"><span>Estimated profile · lineage only</span><span class="estbadge">pending testing</span></div>
+          <div class="labhead"><span>THC <b>~18–21%</b></span><span>Total terps <b>~1.5–2%</b></span></div>
+          <div class="terprow"><span class="tname">Pinene</span><span class="tbar est dom"><i style="width:100%"></i></span><span class="tval">~0.3</span></div>
+          <div class="terprow"><span class="tname">Myrcene</span><span class="tbar est dom"><i style="width:100%"></i></span><span class="tval">~0.3</span></div>
+          <div class="terprow"><span class="tname">Terpinolene</span><span class="tbar est"><i style="width:67%"></i></span><span class="tval">~0.2</span></div>
+          <div class="terprow"><span class="tname">Camphene <span class="vann">(Vicks)</span></span><span class="tbar est"><i style="width:33%"></i></span><span class="tval">~0.1</span></div>
+          <div class="scl"><span class="predtag">est class</span> SC Labs · <b>Sweets &amp; Dreams</b> · atypical menthol/cherry</div>
+          <div class="estbasis">No parent COA — projected from Romulan's pine/menthol + C99 cherry and your aroma notes. The camphor/Vicks character (camphene/eucalyptol) is the wildcard a lab would settle.</div>
+        </div>
+      </div>
+
+      <div class="card island">
+        <span class="tag island">outcross island · clone-only</span>
+        <h3>Midnight Snow</h3>
+        <p class="lin">Gooey <span class="x">×</span> (Old Mendo Haze <span class="x">×</span> Dark Desire)
+          <span class="sub">Gooeybreeder's selection · run via Scallywag</span>
+        </p>
+        <p class="note">A clone-only cut, originally selected by Gooeybreeder and sourced via Scallywag. Your second island — pure Mendo-haze heritage, no Cookies/Breath/OG. The purple from Dark Desire, the haze from OMH, the Gooey backbone. A genuinely new terpene direction to widen the line.</p>
+        <div class="chips">
+          <span class="chip" style="background:var(--haze)">Mendo Haze</span>
+        </div>
+        <div class="foot"><span>flower n/a</span><span>purple · old mendo haze</span></div>
+        <div class="estlab">
+          <div class="esthead"><span>Estimated profile · lineage only</span><span class="estbadge">pending testing</span></div>
+          <div class="labhead"><span>THC <b>~18–22%</b></span><span>Total terps <b>~1.5–2.5%</b></span></div>
+          <div class="terprow"><span class="tname">Terpinolene</span><span class="tbar est dom"><i style="width:100%"></i></span><span class="tval">~0.4</span></div>
+          <div class="terprow"><span class="tname">Myrcene</span><span class="tbar est"><i style="width:75%"></i></span><span class="tval">~0.3</span></div>
+          <div class="terprow"><span class="tname">Ocimene</span><span class="tbar est"><i style="width:75%"></i></span><span class="tval">~0.3</span></div>
+          <div class="terprow"><span class="tname">Linalool</span><span class="tbar est"><i style="width:50%"></i></span><span class="tval">~0.2</span></div>
+          <div class="scl"><span class="predtag">est class</span> SC Labs · <b>Jacks &amp; Haze</b></div>
+          <div class="estbasis">No parent COA — projected from old-Mendo-haze + purple heritage and your aroma notes. Could swing Sweets &amp; Dreams if myrcene/linalool lead the purple side.</div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- 05 INSIGHT -->
+  <section class="sec">
+    <div class="sec-head">
+      <span class="sec-num">05</span>
+      <div><h2 class="sec-title">What the map says about your palette</h2></div>
+    </div>
+    <div class="insight">
+      <p><b>You have one big family and a little fresh blood.</b> The dessert side is a deliberately inbred dynasty on the <span class="hub-em" style="background:#352e20;color:var(--pbb)">Lemon Butter Biscuits</span> backbone: <b>Lemon Zest → Limonetto → Black Limo</b> is a straight parent-to-grandchild line, and Sherbutter folds the same LBB into Limonetto a second time. That dynasty is your only original <b>breeding</b> — but your hand is on most of the library: Polar Dusk, Chilled MacMosa, S.A.G.E 'N Sour and Sharpe Fuel are keepers you <b>pheno-hunted yourself</b> from other breeders' seed, while Black Milk, Space Queen and Midnight Snow are clone-only cuts selected by others. Seven of ten carry either your cross or your selection. Expect high uniformity across your dynasty branch — and little vigour headroom there.</p>
+      <p><b>Chilled MacMosa is your sleeper bridge.</b> Through Mac Stomper's Grape Stomper it carries <span class="hub-em" style="background:#363a1e;color:var(--diesel)">Chemdawg / Sour Diesel</span> under a dessert flavour — the one keeper that links your Cookies pole to your fuel pole without tasting like fuel.</p>
+      <p><b>Space Queen and Midnight Snow are your only clean outcrosses.</b> Both share zero Cookies / Breath / OG with the dynasty. They're the obvious partners to restore hybrid vigour and add real terpene novelty — Space Queen's cherry-and-menthol on one side, old Mendo-haze purple Midnight Snow on the other — without collapsing the frame you've built.</p>
+      <p><b>The fuel axis is thin but real:</b> <span class="hub-em" style="background:#1f3340;color:var(--haze)">S.A.G.E 'N Sour</span> anchors Sour Diesel + Afghani, and Sharpe Fuel stacks Legends OG on Cookies. If you want a true gassy line, that's where to push — it's currently your least-developed direction.</p>
+      <p><b>Black Limo is bred from terpene monsters — and both its farnesene sources converge.</b> Lemon Zest (5.50% terps) and Black Milk (5.93%) both hit the 100th percentile and both feed Black Limo. More specifically, Sherb Breath (4.08% terps, farnesene-led) flows in through Limonetto while Black Milk is farnesene-dominant directly — so Black Limo should come back conspicuously farnesene-forward and wash heavy for solventless.</p>
+      <p><b>By SC Labs' terpene classification, your library skews loud and away from the myrcene mainstream.</b> Lemon Zest codes <b>TXX</b> — the textbook Jack Herer signature — landing in Jacks &amp; Haze exactly where its Super Lemon Haze lineage predicts. S.A.G.E 'N Sour (LCX) and Chilled MacMosa (CLX) both land in OGs &amp; Gas; for MacMosa that's the tell — the Grape Stomper Chemdawg is expressing as a gassy caryophyllene chemotype despite the dessert genetics, confirming the bridge. Black Milk reads Desserts (CLO) on the coded terpenes, but its real lead is farnesene, which SC Labs doesn't code — so it's an outlier even within its own class. None of the four are myrcene-dominant, the most common profile out there; you're selecting toward terpinolene and caryophyllene/limonene loudness.</p>
+    </div>
+  </section>
+
+  <!-- 06 VAULT -->
+  <section class="sec">
+    <div class="sec-head">
+      <span class="sec-num">06</span>
+      <div>
+        <h2 class="sec-title">The vault — unreleased breeding work</h2>
+        <p class="sec-sub">Your working stock beyond the ten keepers: crosses in progress, stabilisations, and preservation lines. The dominant throughline is a <b>Black Milk program</b> — nearly your entire keeper library run against Black Milk as a pollen donor — alongside active Dizzy Delicacy, Peanut Butter Breath, and Bliss lines.</p>
+      </div>
+    </div>
+
+    <div class="vault">
+
+      <div class="vgroup flag">
+        <h4 class="vtitle">Black Milk program <span class="vcount">9</span></h4>
+        <ul class="vlist">
+          <li>Lemon Zest S1 × Black Milk</li>
+          <li>(Limonetto × Lemon Zest) × Black Milk</li>
+          <li>(Midnight Snow × Lemon Zest) × Black Milk</li>
+          <li>Lemon Zest × Black Milk</li>
+          <li>Midnight Snow × Black Milk</li>
+          <li>Chilled MacMosa × Black Milk</li>
+          <li>Sage 'N Sour × Black Milk</li>
+          <li>SoureenGMO × Black Milk</li>
+          <li>Purple Kush × Black Milk</li>
+        </ul>
+      </div>
+
+      <div class="vgroup">
+        <h4 class="vtitle">Dizzy Delicacy line <span class="vcount">3</span></h4>
+        <ul class="vlist">
+          <li>Lemon Zest × Dizzy Delicacy</li>
+          <li>Sherb Breath × Dizzy Delicacy</li>
+          <li>[Froot by The Foot × Dizzy Delicacy] F2 <span class="vann">(Auto)</span> × Chem World</li>
+        </ul>
+      </div>
+
+      <div class="vgroup">
+        <h4 class="vtitle">Peanut Butter Breath line <span class="vcount">3</span></h4>
+        <ul class="vlist">
+          <li>Peanut Butter Breath <span class="vann">F2</span></li>
+          <li>Michigan Mouth × Peanut Butter Breath</li>
+          <li>Wife of Pablo × Peanut Butter Breath</li>
+        </ul>
+      </div>
+
+      <div class="vgroup">
+        <h4 class="vtitle">Bliss crosses <span class="vcount">4</span></h4>
+        <ul class="vlist">
+          <li>S.A.G.E 'n Sour × Purple Bliss</li>
+          <li>Sherb Breath × Purple Bliss</li>
+          <li>Lemon Zest × Lemon Bliss</li>
+          <li>Purple Pop × Lemon Bliss</li>
+        </ul>
+      </div>
+
+      <div class="vgroup">
+        <h4 class="vtitle">Lemon line <span class="vcount">2</span></h4>
+        <ul class="vlist">
+          <li>Lemon Zest × Lemon Butter</li>
+          <li>(Sour Diesel × Topanga Canyon OG) × Lemon Butter</li>
+        </ul>
+      </div>
+
+      <div class="vgroup">
+        <h4 class="vtitle">Stabilisations <span class="vcount">3</span></h4>
+        <ul class="vlist">
+          <li>Garlic Butter <span class="vann">F2</span></li>
+          <li>Garlic Butter <span class="vann">F2 (?)</span></li>
+          <li>ESP <span class="vann">F3</span></li>
+        </ul>
+      </div>
+
+      <div class="vgroup">
+        <h4 class="vtitle">Heritage &amp; preservation <span class="vcount">7</span></h4>
+        <ul class="vlist">
+          <li>Cheese Seeds Dad</li>
+          <li>Airborne G13</li>
+          <li>Simply Irresistible <span class="vann">(Incense Haze × SS) · fems</span></li>
+          <li>Dolce Sativa <span class="vann">(Sweet Skunk × Blueberry) · regs</span></li>
+          <li>The Conroy <span class="vann">(Congolese × Sweet Skunk) · fems</span></li>
+          <li>Sweat Helmet</li>
+          <li>Holiday Dozen</li>
+        </ul>
+      </div>
+
+      <div class="vgroup">
+        <h4 class="vtitle">Other hybrids <span class="vcount">5</span></h4>
+        <ul class="vlist">
+          <li>Purple Urkle × SLH</li>
+          <li>Flamethrower × Mac Motor Sherb</li>
+          <li>Slurricrasher × Froyo</li>
+          <li>Fatso × Cement Shoes II</li>
+          <li>(Vanilla Berry Pie × Mendobreath) × Tha Melon</li>
+        </ul>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- 07 NEXT STEPS -->
+  <section class="sec">
+    <div class="sec-head">
+      <span class="sec-num">07</span>
+      <div>
+        <h2 class="sec-title">Next steps — suggested breeding plans</h2>
+        <p class="sec-sub">Where the data points the program next, in priority order — built from the relatedness math, your terpene coverage gaps, and the cultivars you've said you enjoy.</p>
+      </div>
+    </div>
+    <div style="padding:4px 2px 0">
+
+      <div class="plan">
+        <span class="pnum">01</span>
+        <div class="pbody">
+          <p class="pcross">Lemon Zest <span class="x">×</span> Black Milk <span class="x" style="font-size:11px">— hunt next</span></p>
+          <div class="ptags"><span class="ptag">max heterosis</span><span class="ptag">highest-terp odds</span><span class="ptag">keeps the lemon identity</span></div>
+          <p class="prat">Already in your Black Milk program, and the one I'd prioritise. Both parents hit <b>100th-percentile</b> total terps (Lemon Zest 5.50%, terpinolene-led; Black Milk 5.93%, farnesene-led) and are <b>0% related</b>, so you get full hybrid vigour and the best odds of a 6%+ terpene standout anywhere in the program. Unlike Black Limo, it keeps Lemon Zest at a clean <b>50%</b> — the lemon/terpinolene signature stays dominant instead of being diluted through Limonetto's grapefruit detour. Run it side-by-side with Black Limo: it's the controlled test of what the Limonetto generation actually buys you. Expect phenos spanning lemon-terpinolene to cherry-farnesene, with rare ones that stack both.</p>
+        </div>
+      </div>
+
+      <div class="plan">
+        <span class="pnum">02</span>
+        <div class="pbody">
+          <p class="pcross">Dolce Sativa phenohunt <span class="x">·</span> Sweet Skunk <span class="x">×</span> Blueberry</p>
+          <div class="ptags"><span class="ptag alt">fills the myrcene gap</span><span class="ptag alt">Blue-Dream-adjacent</span><span class="ptag alt">find a male donor</span></div>
+          <p class="prat">Your whole library skews <b>away from myrcene</b> — it's the one major terpene axis you don't cover, and the Sweets &amp; Dreams class is empty. Dolce Sativa shares Blue Dream's <b>Blueberry</b> parent, so it should deliver the relaxing berry-myrcene profile you like. It's <b>regs</b>, so you've got options for a donor: keep a myrcene-dominant <b>male</b>, or reverse a strong female for feminized pollen. Either way you get a myrcene source to breed into your terpinolene-heavy lemon and dessert lines — something none of your current cultivars can offer. A myrcene parent over Lemon Zest, or over the dynasty, would round out that energetic citrus with weight.</p>
+        </div>
+      </div>
+
+      <div class="plan">
+        <span class="pnum">03</span>
+        <div class="pbody">
+          <p class="pcross">Refresh the dynasty with an island <span class="x">·</span> Space Queen or Midnight Snow <span class="x">×</span> dessert line</p>
+          <div class="ptags"><span class="ptag">recovers vigour</span><span class="ptag">new terpene axis</span></div>
+          <p class="prat">Limonetto is <b>14.1% inbred</b> and the dessert line is tightening. Cross a 0%-related island back in to recover heterosis and add a note you don't have: <b>Space Queen</b> brings cherry-menthol (completely outside your palette), <b>Midnight Snow</b> brings old-Mendo haze. You reset relatedness to zero on the F1, then select back toward your profile — the Black Milk model applied to flavour novelty rather than potency.</p>
+        </div>
+      </div>
+
+      <div class="plan">
+        <span class="pnum">04</span>
+        <div class="pbody">
+          <p class="pcross">Lean into the sour, not the gas <span class="x">·</span> S.A.G.E 'N Sour</p>
+          <div class="ptags"><span class="ptag">sour-citrus, not fuel</span><span class="ptag">pairs with your lemon lines</span></div>
+          <p class="prat">You've said the heavy fuel/gas funk isn't your thing — it's the <b>sour</b> side you want, and that plays to your strengths. S.A.G.E 'N Sour already tests <b>limonene-led</b> (LCX), so it leans bright sour-citrus rather than gassy caryophyllene. Select toward that limonene/sour expression and away from the fuel, and it folds naturally into your lemon program — a tangy sour-citrus accent on the HashSeed identity, not a separate gas project. It's also <b>0% related to everything</b>, so it crosses in cleanly.</p>
+        </div>
+      </div>
+
+      <div class="plan">
+        <span class="pnum">05</span>
+        <div class="pbody">
+          <p class="pcross">Stabilise a keeper for release <span class="x">·</span> F2 / S1</p>
+          <div class="ptags"><span class="ptag">fix the profile</span></div>
+          <p class="prat">Once a standout F1 emerges — most likely from the Lemon Zest × Black Milk hunt — take it to <b>F2 or S1</b> to lock the profile. The relatedness math says your dessert line already breeds true; the new hybrids just need a generation or two of selection before they're stable enough to release or share.</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <p class="pagefoot">
+    Lineages confirmed against your records + SeedFinder (Hash Seed, Exotic Genetix, T.H.Seeds, Capulator, ThugPug, Right Hemisphere, Sacred Cut Seed Co, Chimera Genetics), Leafly and breeder listings.<br>
+    Heritage cuts (Gooey, Old Mendo Haze, Dark Desire) are clone-only with no published A×B parents — terminal nodes in the tree.<br>
+    SC Labs terpene class applied from your High North COA data per sclabs.com (these were not tested by SC Labs). Code = top coded terpenes by %, X = under half the primary: M myrcene · O ocimene · L limonene · P pinene · C caryophyllene · U linalool · T terpinolene. Farnesene and humulene are not coded, so farnesene-led profiles (Black Milk) read lower than they actually smell.<br>
+    Estimated profiles (dashed panels marked "pending testing") are mid-parent / lineage projections, not measured values — Limonetto and Black Limo from real parent COAs, the rest from lineage alone. Treat them as expectations to confirm at the lab, not results.
+  </p>
+
+</div>
+
+<script>
+  (function(){
+    var stage=document.getElementById('stage');
+    if(!stage)return;
+    var nodes=stage.querySelectorAll('.node.keep');
+    var edges=stage.querySelectorAll('.edge');
+    nodes.forEach(function(n){
+      var k=n.getAttribute('data-k');
+      function on(){
+        stage.classList.add('has-hover');
+        n.classList.add('lit');
+        edges.forEach(function(e){ if(e.getAttribute('data-k')===k) e.classList.add('lit'); });
+      }
+      function off(){
+        stage.classList.remove('has-hover');
+        n.classList.remove('lit');
+        edges.forEach(function(e){ e.classList.remove('lit'); });
+      }
+      n.addEventListener('mouseenter',on);
+      n.addEventListener('mouseleave',off);
+      n.addEventListener('focus',on);
+      n.addEventListener('blur',off);
+      n.setAttribute('tabindex','0');
+    });
+  })();
+</script>
+<script>
+(function(){
+  var stage=document.getElementById('stage'); if(!stage) return;
+  var nodes=stage.querySelectorAll('.node.keep'), edges=stage.querySelectorAll('.edge');
+  var chips=document.querySelectorAll('.fchip');
+  function clearF(){stage.classList.remove('has-filter');chips.forEach(c=>c.classList.remove('active'));
+    nodes.forEach(n=>n.classList.remove('fmatch'));edges.forEach(e=>e.classList.remove('fmatch'));}
+  chips.forEach(function(chip){chip.addEventListener('click',function(){
+    var ft=chip.getAttribute('data-ft');
+    if(ft==='reset'||chip.classList.contains('active')){clearF();return;}
+    clearF();chip.classList.add('active');stage.classList.add('has-filter');
+    var fv=chip.getAttribute('data-fv');
+    nodes.forEach(function(n){
+      var val=(n.getAttribute('data-'+ft)||'').split(' ');
+      if(val.indexOf(fv)>=0){n.classList.add('fmatch');var k=n.getAttribute('data-k');
+        edges.forEach(function(e){if(e.getAttribute('data-k')===k)e.classList.add('fmatch');});}
+    });});});
+  var rmat=document.querySelector('.rmat');
+  if(rmat){var cells=rmat.querySelectorAll('.rc');
+    cells.forEach(function(cell){
+      cell.addEventListener('mouseenter',function(){
+        var rr=cell.getAttribute('data-r'),cc=cell.getAttribute('data-c');rmat.classList.add('hl');
+        cells.forEach(function(x){var xr=x.getAttribute('data-r'),xc=x.getAttribute('data-c');
+          if(xr===rr||xc===cc||(xr===cc&&xc===rr)||(xr===rr)) x.classList.add('on');});});
+      cell.addEventListener('mouseleave',function(){rmat.classList.remove('hl');cells.forEach(x=>x.classList.remove('on'));});
+    });}
+})();
+</script>
+</body>
+</html>
